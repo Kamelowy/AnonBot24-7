@@ -1,7 +1,7 @@
 /*
- * Discord Bot Builder Bot
- * Version 1.2.0
- * Robert Borghese
+ * Anonkowo
+ * Wersja 0.1 Alpha
+ * Kamelowy 2019
  */
 
 const Files = require(require('path').join(__dirname, 'js', 'Main.js')).Files;
