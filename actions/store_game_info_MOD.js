@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Store Role Info",
+name: "Store Game Info",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Store Role Info",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Role Control",
+section: "Member Control",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,11 +23,10 @@ section: "Role Control",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const roles = ['Mentioned Role', '1st Author Role', '1st Server Role', 'Temp Variable', 'Server Variable', 'Global Variable'];
-	const info = ['Role Object', 'Role ID', 'Role Name', 'Role Color', 'Role Position', 'Role Timestamp', 'Role Is Mentionable?', 'Role Is Separate From Others?', 'Role Is Managed?', 'Role Member List']
-	return `${roles[parseInt(data.role)]} - ${info[parseInt(data.info)]}`;
+	const members = ['Mentioned User', 'Command Author', 'Temp Variable', 'Server Variable', 'Global Variable'];
+	const info = ['Game Application ID', 'Game Details', 'Game Name', 'Game State', 'Game Is Being Streamed?', 'Game Stream URL', 'Game Status Type', 'Game Large Image ID', 'Game Large Image URL', 'Game Large Image Text', 'Game Small Image ID', 'Game Small Image URL', 'Game Small Image Text', 'Game Timestamp Start', 'Game Party ID', 'Game Timestamp End', 'Game Party Size'];
+	return `${members[parseInt(data.member)]} - ${info[parseInt(data.info)]}`;
 },
-
 
 //---------------------------------------------------------------------
 // DBM Mods Manager Variables (Optional but nice to have!)
@@ -37,16 +36,15 @@ subtitle: function(data) {
 //---------------------------------------------------------------------
 
 // Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & Lasse",
+author: "MrGold",
 
 // The version of the mod (Defaults to 1.0.0)
-version: "1.9.2", //Added in 1.9.2
+version: "1.9.5", //Added in 1.9.5
 
 // A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "More options for default DBM action.",
+short_description: "Stores Games information",
 
 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
-
 
 //---------------------------------------------------------------------
 
@@ -63,28 +61,55 @@ variableStorage: function(data, varType) {
 	let dataType = 'Unknown Type';
 	switch(info) {
 		case 0:
-			dataType = 'Role';
+			dataType = "Application ID";
 			break;
 		case 1:
-			dataType = 'Role ID';
+			dataType = "Text";
 			break;
 		case 2:
-			dataType = 'Text';
+			dataType = "Text";
 			break;
 		case 3:
-			dataType = 'Color';
+			dataType = "Text";
 			break;
 		case 4:
+			dataType = "Boolean";
+			break;
 		case 5:
-			dataType = 'Text';
+			dataType = "Stream URL";
 			break;
 		case 6:
+			dataType = "Number";
+			break;
 		case 7:
+			dataType = "Large Image ID";
+			break;
 		case 8:
-			dataType = 'Boolean';
+			dataType = "Large Image URL";
 			break;
 		case 9:
-			dataType = 'Member List';
+			dataType = "Large Image Text";
+			break;
+		case 10:
+			dataType = "Small Image ID";
+			break;
+		case 11:
+			dataType = "Small Image URL";
+			break;
+		case 12:
+			dataType = "Small Image Text";
+			break;
+		case 13:
+			dataType = "Date";
+			break;
+		case 14:
+			dataType = "Party ID";
+			break;
+		case 15:
+			dataType = "Date";
+			break;
+		case 16:
+			dataType = "Number";
 			break;
 	}
 	return ([data.varName2, dataType]);
@@ -98,7 +123,7 @@ variableStorage: function(data, varType) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["role", "varName", "info", "storage", "varName2"],
+fields: ["member", "varName", "info", "storage", "varName2"],
 
 //---------------------------------------------------------------------
 // Command HTML
@@ -118,12 +143,17 @@ fields: ["role", "varName", "info", "storage", "varName2"],
 
 html: function(isEvent, data) {
 	return `
-	<div><p>This action has been modified by DBM Mods.</p></div><br>
+<div>
+    <p>
+        <u>Mod Info:</u><br>
+	Created by MrGold
+    </p>
+</div><br>
 <div>
 	<div style="float: left; width: 35%;">
-		Source Role:<br>
-		<select id="role" class="round" onchange="glob.roleChange(this, 'varNameContainer')">
-			${data.roles[isEvent ? 1 : 0]}
+		Source Member:<br>
+		<select id="member" class="round" onchange="glob.memberChange(this, 'varNameContainer')">
+			${data.members[isEvent ? 1 : 0]}
 		</select>
 	</div>
 	<div id="varNameContainer" style="display: none; float: right; width: 60%;">
@@ -135,16 +165,27 @@ html: function(isEvent, data) {
 	<div style="padding-top: 8px; width: 70%;">
 		Source Info:<br>
 		<select id="info" class="round">
-			<option value="0" selected>Role Object</option>
-			<option value="1">Role ID</option>
-			<option value="2">Role Name</option>
-			<option value="3">Role Color</option>
-			<option value="4">Role Position</option>
-			<option value="5">Role Timestamp</option>
-			<option value="9">Role Members</option>
-			<option value="6">Role Is Mentionable?</option>
-			<option value="7">Role Is Separate From Others?</option>
-			<option value="8">Role Is Managed By Bot/Integration</option>
+			<option value="0" selected>Game Application ID</option>
+			<option value="1">Game Details</option>
+			<option value="2">Game Name</option>
+			<option value="3">Game State</option>
+			<option value="4">Game Is Being Streamed?</option>
+			<option value="5">Game Stream URL</option>
+			<option value="6">Game Status Type</option>
+			<option value="13">Game Timestamp Start</option>
+			<option value="15">Game Timestamp End</option>
+			<option value="14">Game Party ID</option>
+			<option value="16">Game Party Size</option>
+			<optgroup label="Assets Large Image">
+			<option value="7">Game Large Image ID</option>
+			<option value="8">Game Large Image URL</option>
+			<option value="9">Game Large Image Text</option>
+			</optgroup>
+			<optgroup label="Assets Small Image">
+			<option value="10">Game Small Image ID</option>
+			<option value="11">Game Small Image URL</option>
+			<option value="12">Game Small Image Text</option>
+			</optgroup>
 		</select>
 	</div>
 </div><br>
@@ -173,7 +214,7 @@ html: function(isEvent, data) {
 init: function() {
 	const {glob, document} = this;
 
-	glob.roleChange(document.getElementById('role'), 'varNameContainer')
+	glob.memberChange(document.getElementById('member'), 'varNameContainer');
 },
 
 //---------------------------------------------------------------------
@@ -186,49 +227,162 @@ init: function() {
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
-	const role = parseInt(data.role);
-	const varName = this.evalMessage(data.varName, cache);
 	const info = parseInt(data.info);
-	const targetRole = this.getRole(role, varName, cache);
-	if(!targetRole) {
+	
+	const member = parseInt(data.member);
+	const varName = this.evalMessage(data.varName, cache);
+	const mem = this.getMember(member, varName, cache);
+	
+	if(!mem) {
 		this.callNextAction(cache);
 		return;
 	}
+	
 	let result;
 	switch(info) {
 		case 0:
-			result = targetRole;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else {
+				result = mem.presence.game.applicationID;
+			}
 			break;
 		case 1:
-			result = targetRole.id;
+			if(!mem.presence.game) {
+			    result = "null";
+			} else {
+				result = mem.presence.game.details;
+			}
 			break;
 		case 2:
-			result = targetRole.name;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else {
+				result = mem.presence.game.name;
+			}
 			break;
 		case 3:
-			result = targetRole.hexColor;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else {
+				result = mem.presence.game.state;
+			}
 			break;
 		case 4:
-			result = targetRole.position;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else {
+				result = mem.presence.game.streaming;
+			}
 			break;
 		case 5:
-			result = targetRole.createdTimestamp;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else {
+				result = mem.presence.game.url;
+			}
 			break;
 		case 6:
-			result = targetRole.mentionable;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else {
+				result = mem.presence.game.type;
+			}
 			break;
 		case 7:
-			result = targetRole.hoist;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.assets) {
+				result = "null";
+			} else {
+				result = mem.presence.game.assets.largeImage;
+			}
 			break;
 		case 8:
-			result = targetRole.managed;
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.assets) {
+				result = "null";
+			} else {
+				result = mem.presence.game.assets.largeImageURL;
+			}
 			break;
 		case 9:
-			result = targetRole.members.array();
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.assets) {
+				result = "null";
+			} else {
+				result = mem.presence.game.assets.largeText;
+			}
+			break;
+		case 10:
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.assets) {
+				result = "null";
+			} else {
+				result = mem.presence.game.assets.smallImage;
+			}
+			break;
+		case 11:
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.assets) {
+				result = "null";
+			} else {
+				result = mem.presence.game.assets.smallImageURL;
+			}
+			break;
+		case 12:
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.assets) {
+				result = "null";
+			} else {
+				result = mem.presence.game.assets.smallText;
+			}
+			break;
+		case 13:
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.timestamps) {
+				result = "null";
+			} else {
+				result = mem.presence.game.timestamps.start;
+			}
+			break;
+		case 14:
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.party) {
+				result = "null";
+			} else {
+				result = mem.presence.game.party.id;
+			}
+			break;
+		case 15:
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.timestamps) {
+				result = "null";
+			} else {
+				result = mem.presence.game.timestamps.end;
+			}
+			break;
+		case 16:
+		    if(!mem.presence.game) {
+			    result = "null";
+			} else if(!mem.presence.game.party) {
+				result = "null";
+			} else {
+				result = mem.presence.game.party.size;
+			}
 			break;
 		default:
 			break;
 	}
+	
 	if(result !== undefined) {
 		const storage = parseInt(data.storage);
 		const varName2 = this.evalMessage(data.varName2, cache);

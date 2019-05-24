@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Transfer Variable",
+name: "Skip Actions",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,18 +14,7 @@ name: "Transfer Variable",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Variable Things",
-
-//---------------------------------------------------------------------
-// Action Subtitle
-//
-// This function generates the subtitle displayed next to the name.
-//---------------------------------------------------------------------
-
-subtitle: function(data) {
-	const storeTypes = ["", "Temp Variable", "Server Variable", "Global Variable"];
-	return `${storeTypes[parseInt(data.storage)]} (${data.varName}) -> ${storeTypes[parseInt(data.storage2)]} (${data.varName2})`;
-},
+section: "Other Stuff",
 
 //---------------------------------------------------------------------
 // DBM Mods Manager Variables (Optional but nice to have!)
@@ -35,17 +24,23 @@ subtitle: function(data) {
 //---------------------------------------------------------------------
 
 // Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & MrGold", //THIS ACTION WAS BROKEN AF, WTF SRD???
+author: "Lasse",
 
 // The version of the mod (Defaults to 1.0.0)
-version: "1.9.5", //Added in 1.9.5
+version: "1.9.5", //Added in 1.8.8
 
-// A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "Transfer the Variable Value to another Variable",
-
-// If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
+// A short description to show on the mod line for this mod.
+short_description: "Skip a specific amount of actions",
 
 //---------------------------------------------------------------------
+// Action Subtitle
+//
+// This function generates the subtitle displayed next to the name.
+//---------------------------------------------------------------------
+
+subtitle: function(data) {
+	return `Skip ${data.count}`;
+},
 
 //---------------------------------------------------------------------
 // Action Fields
@@ -55,51 +50,38 @@ short_description: "Transfer the Variable Value to another Variable",
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["storage", "varName", "storage2", "varName2"],
+fields: ["count"],
 
 //---------------------------------------------------------------------
 // Command HTML
 //
 // This function returns a string containing the HTML used for
-// editting actions. 
+// editting actions.
 //
 // The "isEvent" parameter will be true if this action is being used
-// for an event. Due to their nature, events lack certain information, 
+// for an event. Due to their nature, events lack certain information,
 // so edit the HTML to reflect this.
 //
-// The "data" parameter stores constants for select elements to use. 
+// The "data" parameter stores constants for select elements to use.
 // Each is an array: index 0 for commands, index 1 for events.
-// The names are: sendTargets, members, roles, channels, 
+// The names are: sendTargets, members, roles, channels,
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
 html: function(isEvent, data) {
 	return `
-<div><p>This action has been modified by DBM Mods</p></div><br>
 <div>
-	<div style="float: left; width: 35%;">
-		Transfer Value From:<br>
-		<select id="storage" class="round" onchange="glob.variableChange(this, 'varNameContainer')">
-			${data.variables[1]}
-		</select>
+	<p>
+		<u>Mod Info:</u><br>
+		Created by Lasse!
+	</p>
+</div><br>
+<div>
+	<div id="varNameContainer" style="float: left; width: 60%;">
+		Actions To Skip:<br>
+		<input id="count" class="round" type="number">
 	</div>
-	<div id="varNameContainer" style="float: right; width: 60%;">
-		Variable Name:<br>
-		<input id="varName" class="round" type="text" list="variableList"><br>
-	</div>
-</div><br><br><br>
-<div style="padding-top: 8px;">
-	<div style="float: left; width: 35%;">
-		Transfer Value To:<br>
-		<select id="storage2" name="second-list" class="round" onchange="glob.variableChange(this, 'varNameContainer2')">
-			${data.variables[1]}
-		</select>
-	</div>
-	<div id="varNameContainer2" style="float: right; width: 60%;">
-		Variable Name:<br>
-		<input id="varName2" class="round" type="text" list="variableList2"><br>
-	</div>
-</div>`
+</div><br><br><br>`
 },
 
 //---------------------------------------------------------------------
@@ -110,42 +92,32 @@ html: function(isEvent, data) {
 // functions for the DOM elements.
 //---------------------------------------------------------------------
 
-init: function() {
-	const {glob, document} = this;
-
-	glob.variableChange(document.getElementById('storage'), 'varNameContainer');
-	glob.variableChange(document.getElementById('storage2'), 'varNameContainer2');
-},
+init: function() {},
 
 //---------------------------------------------------------------------
 // Action Bot Function
 //
 // This is the function for the action within the Bot's Action class.
-// Keep in mind event calls won't have access to the "msg" parameter, 
+// Keep in mind event calls won't have access to the "msg" parameter,
 // so be sure to provide checks for variable existance.
 //---------------------------------------------------------------------
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
+	// const val = parseInt(this.evalMessage(data.call, cache));
+	// const index = Math.max(val - 1, 0);
+	// if(cache.actions[index]) {
+	// 	cache.index = index - 1;
+	// 	this.callNextAction(cache);
+	// }
 
-	const storage = parseInt(data.storage);
-	const varName = this.evalMessage(data.varName, cache);
-	const var1 = this.getVariable(storage, varName, cache);
-	if(!var1) {
+	const amnt = parseInt(this.evalMessage(data.count, cache));
+	const index2 = cache.index + amnt + 1;
+
+	if(cache.actions[index2]) {
+		cache.index = index2 - 1;
 		this.callNextAction(cache);
-		return;
 	}
-
-	const storage2 = parseInt(data.storage2);
-	const varName2 = this.evalMessage(data.varName2, cache);
-	const var2 = this.getVariable(storage2, varName2, cache);
-	if(!var2) {
-		this.callNextAction(cache);
-		return;
-	}
-
-	this.storeValue(var1, storage2, varName2, cache);
-	this.callNextAction(cache);
 },
 
 //---------------------------------------------------------------------

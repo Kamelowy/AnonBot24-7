@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Transfer Variable",
+name: "Set Member Voice Channel",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Transfer Variable",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Variable Things",
+section: "Member Control",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,8 +23,8 @@ section: "Variable Things",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const storeTypes = ["", "Temp Variable", "Server Variable", "Global Variable"];
-	return `${storeTypes[parseInt(data.storage)]} (${data.varName}) -> ${storeTypes[parseInt(data.storage2)]} (${data.varName2})`;
+	const members = ['Mentioned User', 'Command Author', 'Temp Variable', 'Server Variable', 'Global Variable'];
+	return `${members[parseInt(data.member)]}`;
 },
 
 //---------------------------------------------------------------------
@@ -35,13 +35,13 @@ subtitle: function(data) {
 //---------------------------------------------------------------------
 
 // Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & MrGold", //THIS ACTION WAS BROKEN AF, WTF SRD???
+author: "DBM & MrGold",
 
 // The version of the mod (Defaults to 1.0.0)
 version: "1.9.5", //Added in 1.9.5
 
 // A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "Transfer the Variable Value to another Variable",
+short_description: "Sets a member on a Voice Channel",
 
 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
 
@@ -55,7 +55,7 @@ short_description: "Transfer the Variable Value to another Variable",
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["storage", "varName", "storage2", "varName2"],
+fields: ["member", "varName", "channel", "varName2"],
 
 //---------------------------------------------------------------------
 // Command HTML
@@ -75,27 +75,27 @@ fields: ["storage", "varName", "storage2", "varName2"],
 
 html: function(isEvent, data) {
 	return `
-<div><p>This action has been modified by DBM Mods</p></div><br>
-<div>
+<div><p>This action has been modified by DBM Mods.</p></div><br>
+<div style="padding-top: 8px;">
 	<div style="float: left; width: 35%;">
-		Transfer Value From:<br>
-		<select id="storage" class="round" onchange="glob.variableChange(this, 'varNameContainer')">
-			${data.variables[1]}
+		Source Member:<br>
+		<select id="member" class="round" onchange="glob.memberChange(this, 'varNameContainer')">
+			${data.members[isEvent ? 1 : 0]}
 		</select>
 	</div>
-	<div id="varNameContainer" style="float: right; width: 60%;">
+	<div id="varNameContainer" style="display: none; float: right; width: 60%;">
 		Variable Name:<br>
 		<input id="varName" class="round" type="text" list="variableList"><br>
 	</div>
 </div><br><br><br>
-<div style="padding-top: 8px;">
+<div>
 	<div style="float: left; width: 35%;">
-		Transfer Value To:<br>
-		<select id="storage2" name="second-list" class="round" onchange="glob.variableChange(this, 'varNameContainer2')">
-			${data.variables[1]}
+		Source Voice Channel:<br>
+		<select id="channel" name="second-list" class="round" onchange="glob.channelChange(this, 'varNameContainer2')">
+			${data.channels[isEvent ? 1 : 0]}
 		</select>
 	</div>
-	<div id="varNameContainer2" style="float: right; width: 60%;">
+	<div id="varNameContainer2" style="display: none; float: right; width: 60%;">
 		Variable Name:<br>
 		<input id="varName2" class="round" type="text" list="variableList2"><br>
 	</div>
@@ -113,8 +113,8 @@ html: function(isEvent, data) {
 init: function() {
 	const {glob, document} = this;
 
-	glob.variableChange(document.getElementById('storage'), 'varNameContainer');
-	glob.variableChange(document.getElementById('storage2'), 'varNameContainer2');
+	glob.memberChange(document.getElementById('member'), 'varNameContainer');
+	glob.channelChange(document.getElementById('channel'), 'varNameContainer2');
 },
 
 //---------------------------------------------------------------------
@@ -128,24 +128,25 @@ init: function() {
 action: function(cache) {
 	const data = cache.actions[cache.index];
 
-	const storage = parseInt(data.storage);
+	const storage = parseInt(data.member);
 	const varName = this.evalMessage(data.varName, cache);
-	const var1 = this.getVariable(storage, varName, cache);
-	if(!var1) {
-		this.callNextAction(cache);
-		return;
-	}
+	const member = this.getMember(storage, varName, cache);
 
-	const storage2 = parseInt(data.storage2);
+	const storage2 = parseInt(data.channel);
 	const varName2 = this.evalMessage(data.varName2, cache);
-	const var2 = this.getVariable(storage2, varName2, cache);
-	if(!var2) {
-		this.callNextAction(cache);
-		return;
-	}
+	const channel = this.getVoiceChannel(storage2, varName2, cache);
 
-	this.storeValue(var1, storage2, varName2, cache);
-	this.callNextAction(cache);
+	if(Array.isArray(member)) {
+		this.callListFunc(member, 'setVoiceChannel', [channel]).then(function() {
+			this.callNextAction(cache);
+		}.bind(this));
+	} else if(member && member.setVoiceChannel) {
+		member.setVoiceChannel(channel).then(function() {
+			this.callNextAction(cache);
+		}.bind(this)).catch(this.displayError.bind(this, data, cache));
+	} else {
+		this.callNextAction(cache);
+	}
 },
 
 //---------------------------------------------------------------------
