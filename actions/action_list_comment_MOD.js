@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Add Embed Field",
+name: "Comment",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,17 +14,7 @@ name: "Add Embed Field",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Embed Message",
-
-//---------------------------------------------------------------------
-// Action Subtitle
-//
-// This function generates the subtitle displayed next to the name.
-//---------------------------------------------------------------------
-
-subtitle: function(data) {
-	return `${data.name} - ${data.message}`;
-},
+section: "Other Stuff",
 
 //---------------------------------------------------------------------
 	 // DBM Mods Manager Variables (Optional but nice to have!)
@@ -34,19 +24,28 @@ subtitle: function(data) {
 	 //---------------------------------------------------------------------
 
 	 // Who made the mod (If not set, defaults to "DBM Mods")
-	 author: "DBM, Aioi & MrGold",
+	 author: "General Wrex",
 
 	 // The version of the mod (Defaults to 1.0.0)
-	 version: "1.9.4", //Added in 1.8.2
+	 version: "1.8.2",
 
 	 // A short description to show on the mod line for this mod (Must be on a single line)
-	 short_description: "Changed category and added blank field feature",
+	 short_description: "Adds a comment which you can see in the Mod Manager",
 
 	 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
 
 
 	 //---------------------------------------------------------------------
 
+//---------------------------------------------------------------------
+// Action Subtitle
+//
+// This function generates the subtitle displayed next to the name.
+//---------------------------------------------------------------------
+
+subtitle: function(data) {
+	return '<font color="' + data.color +'">' + data.comment + '</font>';
+},
 
 //---------------------------------------------------------------------
 // Action Fields
@@ -56,7 +55,7 @@ subtitle: function(data) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["storage", "varName", "fieldName", "message", "inline"],
+fields: ["comment", "color"],
 
 //---------------------------------------------------------------------
 // Command HTML
@@ -74,39 +73,23 @@ fields: ["storage", "varName", "fieldName", "message", "inline"],
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
-	
 html: function(isEvent, data) {
 	return `
-<div><p>This action has been modified by DBM Mods. Use [Title](Link) to mask links here.</p></div><br>
-<div>
-	<div style="float: left; width: 35%;">
-		Source Embed Object:<br>
-		<select id="storage" class="round" onchange="glob.refreshVariableList(this)">
-			${data.variables[1]}
-		</select>
-	</div>
-	<div id="varNameContainer" style="float: right; width: 60%;">
-		Variable Name:<br>
-		<input id="varName" class="round varSearcher" type="text" list="variableList"><br>
-	</div>
-</div><br><br><br>
-<div style="padding-top: 8px;">
-	<div style="float: left; width: 50%;">
-		Field Name:<br>
-		<input id="fieldName" placeholder="Optional" class="round" type="text">
-	</div>
-	<div style="float: left; width: 50%;">
-		Display Inline:<br>
-		<select id="inline" class="round">
-			<option value="0">Yes</option>
-			<option value="1" selected>No</option>
-		</select>
-	</div>
-</div><br><br><br>
-<div style="padding-top: 8px;">
-	Field Description:<br>
-	<textarea id="message" rows="7.5" placeholder="Insert message here... (Optional)" style="width: 99%; font-family: monospace; white-space: nowrap; resize: none;"></textarea>
-</div>`
+	<div>
+		<p>
+			<u>Mod Info:</u><br>
+			Created by General Wrex!<br><br>
+			This will leave a comment in the right side of the action list where the action info is.<br>
+			It automatically calls the next action in the list.<br><br>
+			<b>This still counts as an Action, the action number still applies.</b>
+		</p>
+	</div><br>
+	<div style="float: left; width: 99%;">
+	    Text Color:<br>
+		<input type="color" id="color"><br>
+		Comment To Show: (Supports some HTML Tags)<br>
+		<input id="comment" class="round" type="text"><br>
+	</div>`
 },
 
 //---------------------------------------------------------------------
@@ -129,19 +112,6 @@ init: function() {
 //---------------------------------------------------------------------
 
 action: function(cache) {
-	const data = cache.actions[cache.index];
-
-	const storage = parseInt(data.storage);
-	const varName = this.evalMessage(data.varName, cache);
-	const embed = this.getVariable(storage, varName, cache);
-
-	const name = this.evalMessage(data.fieldName, cache);
-	const message = this.evalMessage(data.message, cache);
-
-	const inline = Boolean(data.inline === "0");
-	if(embed && embed.addField) {
-		embed.addField(name ? name : '\u200B', message ? message : '\u200B', inline);
-	}
 	this.callNextAction(cache);
 },
 
