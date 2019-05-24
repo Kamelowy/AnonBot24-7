@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Control Variable",
+name: "Find Reaction",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Control Variable",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Variable Things",
+section: "Reaction Control",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,9 +23,29 @@ section: "Variable Things",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const storage = ['', 'Temp Variable', 'Server Variable', 'Global Variable'];
-	return `${storage[parseInt(data.storage)]} (${data.varName}) ${data.changeType === "1" ? "+=" : "="} ${data.value}`;
+	return `${data.find}`;
 },
+
+//---------------------------------------------------------------------
+	 // DBM Mods Manager Variables (Optional but nice to have!)
+	 //
+	 // These are variables that DBM Mods Manager uses to show information
+	 // about the mods for people to see in the list.
+	 //---------------------------------------------------------------------
+
+	 // Who made the mod (If not set, defaults to "DBM Mods")
+	 author: "MrGold",
+
+	 // The version of the mod (Defaults to 1.0.0)
+	 version: "1.9.1", //Added in 1.9.1
+
+	 // A short description to show on the mod line for this mod (Must be on a single line)
+	 short_description: "Finds a reaction",
+
+	 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
+
+
+	 //---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
 // Action Storage Function
@@ -36,28 +56,8 @@ subtitle: function(data) {
 variableStorage: function(data, varType) {
 	const type = parseInt(data.storage);
 	if(type !== varType) return;
-	return ([data.varName, 'Unknown Type']);
+	return ([data.varName2, 'Reaction']);
 },
-
-//---------------------------------------------------------------------
-// DBM Mods Manager Variables (Optional but nice to have!)
-//
-// These are variables that DBM Mods Manager uses to show information
-// about the mods for people to see in the list.
-//---------------------------------------------------------------------
-
-// Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & MrGold",
-
-// The version of the mod (Defaults to 1.0.0)
-version: "1.9.5", //Added in 1.9.5
-
-// A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "Controls the value for an Existing Variable or a New Variable",
-
-// If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
-
-//---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
 // Action Fields
@@ -67,7 +67,7 @@ short_description: "Controls the value for an Existing Variable or a New Variabl
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["changeType", "value", "storage", "varName"],
+fields: ["message", "varName", "info", "find", "storage", "varName2"],
 
 //---------------------------------------------------------------------
 // Command HTML
@@ -87,32 +87,48 @@ fields: ["changeType", "value", "storage", "varName"],
 
 html: function(isEvent, data) {
 	return `
-<div><p>This action has been modified by DBM Mods</p></div>
+	<div>
+		<p>
+			<u>Mod Info:</u><br>
+			Created by MrGold
+		</p>
+	</div><br>
 <div>
-	<div style="padding-top: 12px; width: 35%;">
-		Control Type:<br>
-		<select id="changeType" class="round">
-			<option value="0" selected>Set Value</option>
-			<option value="1">Add Value</option>
+	<div style="float: left; width: 35%;">
+		Source Message:<br>
+		<select id="message" class="round" onchange="glob.messageChange(this, 'varNameContainer')">
+			${data.messages[isEvent ? 1 : 0]}
 		</select>
 	</div>
-</div><br>
+	<div id="varNameContainer" style="display: none; float: right; width: 60%;">
+		Variable Name:<br>
+		<input id="varName" class="round" type="text" list="variableList"><br>
+	</div>
+</div><br><br><br><br>
 <div>
-	Value:<br>
-	<textarea id="value" rows="7" placeholder="Insert what you want here..." style="width: 99%; font-family: monospace; white-space: nowrap; resize: none;"></textarea>
-</div><br>
-<div>
+	<div style="float: left; width: 40%;">
+		Source Emoji:<br>
+		<select id="info" class="round">
+			<option value="0" selected>Emoji ID</option>
+			<option value="1">Emoji Name</option>
+		</select>
+	</div>
+	<div style="float: right; width: 55%;">
+		Search Value:<br>
+		<input id="find" class="round" type="text">
+	</div>
+</div><br><br><br><br>
+<div style="padding-top: 8px;">
 	<div style="float: left; width: 35%;">
 		Store In:<br>
 		<select id="storage" class="round">
 			${data.variables[1]}
 		</select>
 	</div>
-	<div id="varNameContainer" style="float: right; width: 60%;">
+	<div id="varNameContainer2" style="float: right; width: 60%;">
 		Variable Name:<br>
-		<input id="varName" class="round" type="text">
-	</div>
-</div>`
+		<input id="varName2" class="round" type="text">
+	</div>`
 },
 
 //---------------------------------------------------------------------
@@ -123,7 +139,11 @@ html: function(isEvent, data) {
 // functions for the DOM elements.
 //---------------------------------------------------------------------
 
-init: function() {},
+init: function() {
+	const {glob, document} = this;
+
+	glob.messageChange(document.getElementById('message'), 'varNameContainer')
+},
 
 //---------------------------------------------------------------------
 // Action Bot Function
@@ -135,28 +155,28 @@ init: function() {},
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
-	const type = parseInt(data.storage);
+	const message = parseInt(data.message);
 	const varName = this.evalMessage(data.varName, cache);
-	const storage = this.getVariable(type, varName, cache);
-	const isAdd = Boolean(data.changeType === "1");
-	let val = this.evalMessage(data.value, cache);
-	try {
-		val = this.eval(val, cache);
-	} catch(e) {
-		this.displayError(data, cache, e);
+	const msg = this.getMessage(message, varName, cache);
+	const info = parseInt(data.info);
+	const emoji = this.evalMessage(data.find, cache);
+	
+	let result;
+	switch(info) {
+		case 0:
+			result = msg.reactions.find(reaction => reaction.emoji.id == emoji);
+			break;
+		case 1:
+			result = msg.reactions.find(reaction => reaction.emoji.name == emoji);
+			break;
+		default:
+			break;
 	}
-	if(val !== undefined) {
-		if(isAdd) {
-			let result;
-			if(storage === undefined) {
-				result = val;
-			} else {
-				result = storage + val;
-			}
-			this.storeValue(result, type, varName, cache);
-		} else {
-			this.storeValue(val, type, varName, cache);
-		}
+	
+	if(result !== undefined) {
+		const storage = parseInt(data.storage);
+		const varName2 = this.evalMessage(data.varName2, cache);
+		this.storeValue(result, storage, varName2, cache);
 	}
 	this.callNextAction(cache);
 },

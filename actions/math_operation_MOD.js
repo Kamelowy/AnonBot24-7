@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Control Variable",
+name: "Math Operation",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Control Variable",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Variable Things",
+section: "Other Stuff",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,22 +23,10 @@ section: "Variable Things",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const storage = ['', 'Temp Variable', 'Server Variable', 'Global Variable'];
-	return `${storage[parseInt(data.storage)]} (${data.varName}) ${data.changeType === "1" ? "+=" : "="} ${data.value}`;
+	const info = ['Round', 'Absolute', 'Ceil', 'Floor', 'Sine', 'Cosine', 'Tangent', 'Arc Sine', 'Arc Cosine', 'Arc Tangent'];
+	return `${info[data.info]}`;
 },
-
-//---------------------------------------------------------------------
-// Action Storage Function
-//
-// Stores the relevant variable info for the editor.
-//---------------------------------------------------------------------
-
-variableStorage: function(data, varType) {
-	const type = parseInt(data.storage);
-	if(type !== varType) return;
-	return ([data.varName, 'Unknown Type']);
-},
-
+	
 //---------------------------------------------------------------------
 // DBM Mods Manager Variables (Optional but nice to have!)
 //
@@ -47,17 +35,28 @@ variableStorage: function(data, varType) {
 //---------------------------------------------------------------------
 
 // Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & MrGold",
+author: "iAmaury",
 
 // The version of the mod (Defaults to 1.0.0)
-version: "1.9.5", //Added in 1.9.5
+version: "1.8.9",
 
 // A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "Controls the value for an Existing Variable or a New Variable",
+short_description: "Do math operations using the Math object",
 
 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
 
 //---------------------------------------------------------------------
+// Action Storage Function
+//
+// Stores the relevant variable info for the editor.
+//---------------------------------------------------------------------
+
+variableStorage: function (data, varType) {
+	const type = parseInt(data.storage);
+	if (type !== varType) return;
+	let dataType = 'Number';
+	return ([data.varName, dataType]);
+},
 
 //---------------------------------------------------------------------
 // Action Fields
@@ -67,7 +66,7 @@ short_description: "Controls the value for an Existing Variable or a New Variabl
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["changeType", "value", "storage", "varName"],
+fields: ["math", "info", "storage", "varName"],
 
 //---------------------------------------------------------------------
 // Command HTML
@@ -87,21 +86,37 @@ fields: ["changeType", "value", "storage", "varName"],
 
 html: function(isEvent, data) {
 	return `
-<div><p>This action has been modified by DBM Mods</p></div>
 <div>
-	<div style="padding-top: 12px; width: 35%;">
-		Control Type:<br>
-		<select id="changeType" class="round">
-			<option value="0" selected>Set Value</option>
-			<option value="1">Add Value</option>
-		</select>
+	<div style="float: left; width: 30%; padding-top: 8px;">
+		<p><u>Mod Info:</u><br>
+		Made by <b>iAmaury</b> !<br>
+		Edited by MrGold</p>
 	</div>
+	<div style="float: right; width: 60%; padding-top: 8px;">
+		<p><u>Note:</u><br>
+		Get more informations <a href="https://www.w3schools.com/js/js_math.asp">here</a>.
+	</div><br>
+</div><br><br><br>
+<div style="padding-top: 8px;">
+	Source Number:
+	<textarea id="math" rows="2" placeholder="Insert number(s) here..." style="width: 99%; font-family: monospace; white-space: nowrap; resize: none;"></textarea>
 </div><br>
-<div>
-	Value:<br>
-	<textarea id="value" rows="7" placeholder="Insert what you want here..." style="width: 99%; font-family: monospace; white-space: nowrap; resize: none;"></textarea>
+<div style="padding-top: 8px; width: 60%;">
+	Math Operation:
+	<select id="info" class="round">
+			<option value="0" selected>Round</option>
+			<option value="1">Absolute</option>
+			<option value="2">Ceil</option>
+			<option value="3">Floor</option>
+			<option value="4">Sine</option>
+			<option value="5">Cosine</option>
+			<option value="6">Tangent</option>
+			<option value="7">Arc Sine</option>
+			<option value="8">Arc Cosine</option>
+			<option value="9">Arc Tangent</option>
+	</select>
 </div><br>
-<div>
+<div style="padding-top: 8px;">
 	<div style="float: left; width: 35%;">
 		Store In:<br>
 		<select id="storage" class="round">
@@ -112,7 +127,8 @@ html: function(isEvent, data) {
 		Variable Name:<br>
 		<input id="varName" class="round" type="text">
 	</div>
-</div>`
+</div>
+	`
 },
 
 //---------------------------------------------------------------------
@@ -123,7 +139,8 @@ html: function(isEvent, data) {
 // functions for the DOM elements.
 //---------------------------------------------------------------------
 
-init: function() {},
+init: function() {
+	},
 
 //---------------------------------------------------------------------
 // Action Bot Function
@@ -135,28 +152,54 @@ init: function() {},
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
-	const type = parseInt(data.storage);
+	const storage = parseInt(data.storage);
 	const varName = this.evalMessage(data.varName, cache);
-	const storage = this.getVariable(type, varName, cache);
-	const isAdd = Boolean(data.changeType === "1");
-	let val = this.evalMessage(data.value, cache);
-	try {
-		val = this.eval(val, cache);
-	} catch(e) {
-		this.displayError(data, cache, e);
+	const math = parseFloat(this.evalMessage(data.math, cache).replace(/,/g, ''));
+	const info = parseInt(data.info);
+
+	if(!math) {
+		console.log("There is no number !")
+		this.callNextAction(cache);
 	}
-	if(val !== undefined) {
-		if(isAdd) {
-			let result;
-			if(storage === undefined) {
-				result = val;
-			} else {
-				result = storage + val;
-			}
-			this.storeValue(result, type, varName, cache);
-		} else {
-			this.storeValue(val, type, varName, cache);
-		}
+	let result;
+	switch(info) {
+		case 0:
+			result = Math.round(math);
+			break;
+		case 1:
+			result = Math.abs(math);
+			break;
+		case 2:
+			result = Math.ceil(math);
+			break;
+		case 3:
+			result = Math.floor(math);
+			break;
+		case 4:
+			result = Math.sin(math);
+			break;
+		case 5:
+			result = Math.cos(math);
+			break;
+		case 6:
+			result = Math.tan(math);
+			break;
+		case 7:
+			result = Math.asin(math);
+			break;
+		case 8:
+			result = Math.acos(math);
+			break;
+		case 9:
+			result = Math.atan(math);
+			break;
+		default:
+			break;
+	}
+	if (result !== undefined) {
+		const storage = parseInt(data.storage);
+		const varName = this.evalMessage(data.varName, cache);
+		this.storeValue(result, storage, varName, cache);
 	}
 	this.callNextAction(cache);
 },

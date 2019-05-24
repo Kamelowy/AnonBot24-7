@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Create Voice Channel",
+name: "Custom Image Effects",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Create Voice Channel",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Channel Control",
+section: "Image Editing",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,20 +23,31 @@ section: "Channel Control",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	return `${data.channelName}`;
+	const storeTypes = ["", "Temp Variable", "Server Variable", "Global Variable"];
+	const effect = ["Custom Blur", "Custom Pixelate"];
+	return `${storeTypes[parseInt(data.storage)]} (${data.varName}) -> ${effect[parseInt(data.effect)]} ${data.intensity}`;
 },
 
 //---------------------------------------------------------------------
-// Action Storage Function
-//
-// Stores the relevant variable info for the editor.
-//---------------------------------------------------------------------
+	 // DBM Mods Manager Variables (Optional but nice to have!)
+	 //
+	 // These are variables that DBM Mods Manager uses to show information
+	 // about the mods for people to see in the list.
+	 //---------------------------------------------------------------------
 
-variableStorage: function(data, varType) {
-	const type = parseInt(data.storage);
-	if(type !== varType) return;
-	return ([data.varName, 'Voice Channel']);
-},
+	 // Who made the mod (If not set, defaults to "DBM Mods")
+	 author: "Lasse",
+
+	 // The version of the mod (Defaults to 1.0.0)
+	 version: "1.9.2", //Added in 1.8.2
+
+	 // A short description to show on the mod line for this mod (Must be on a single line)
+	 short_description: "Adds image effects with a custom Intensity",
+
+	 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
+
+
+	 //---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
 // Action Fields
@@ -46,52 +57,55 @@ variableStorage: function(data, varType) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["channelName", "categoryID", "bitrate", "userLimit", "storage", "varName"],
+fields: ["storage", "varName", "effect", "intensity"],
 
 //---------------------------------------------------------------------
 // Command HTML
 //
 // This function returns a string containing the HTML used for
-// editting actions. 
+// editting actions.
 //
 // The "isEvent" parameter will be true if this action is being used
-// for an event. Due to their nature, events lack certain information, 
+// for an event. Due to their nature, events lack certain information,
 // so edit the HTML to reflect this.
 //
-// The "data" parameter stores constants for select elements to use. 
+// The "data" parameter stores constants for select elements to use.
 // Each is an array: index 0 for commands, index 1 for events.
-// The names are: sendTargets, members, roles, channels, 
+// The names are: sendTargets, members, roles, channels,
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
 html: function(isEvent, data) {
 	return `
-Name:<br>
-<input id="channelName" class="round" type="text" style="width: 95%"><br>
-
-Category ID:<br>
-<input id= "categoryID" class="round" type="text" placeholder="Keep this empty if you don't want to put it into a category" style="width: 95%"><br>
-
-<div style="float: left; width: 50%;">
-	Bitrate:<br>
-	<input id="bitrate" class="round" type="text" placeholder="Leave blank for default!" style="width: 90%;"><br>
-</div>
-
-<div style="float: right; width: 50%;">
-	User Limit:<br>
-	<input id="userLimit" class="round" type="text" placeholder="Leave blank for default!" style="width: 90%;"><br>
-</div>
-
+	<div>
+		<p>
+			<u>Mod Info:</u><br>
+			Created by Lasse!
+		</p>
+	</div><br>
 <div>
 	<div style="float: left; width: 45%;">
-		Store In:<br>
-		<select id="storage" class="round" onchange="glob.variableChange(this, 'varNameContainer')">
-			${data.variables[0]}
+		Base Image:<br>
+		<select id="storage" class="round" onchange="glob.refreshVariableList(this)">
+			${data.variables[1]}
 		</select>
 	</div>
-	<div id="varNameContainer" style="display: none; float: right; width: 50%;">
+	<div id="varNameContainer" style="float: right; width: 50%;">
 		Variable Name:<br>
-		<input id="varName" class="round" type="text" style="width: 90%"><br>
+		<input id="varName" class="round" type="text" list="variableList"><br>
+	</div>
+</div><br><br><br>
+<div style="padding-top: 8px;">
+	<div style="float: left; width: 90%;">
+		Effect:<br>
+		<select id="effect" class="round">
+			<option value="0" selected>Custom Blur</option>
+			<option value="1">Custom Pixelate</option>
+		</select><br>
+	</div>
+	<div id="intensityContainer" style="float: left; width: 50%;">
+		Intensity:<br>
+		<input id="intensity" class="round" type="text"><br>
 	</div>
 </div>`
 },
@@ -107,44 +121,57 @@ Category ID:<br>
 init: function() {
 	const {glob, document} = this;
 
-	glob.variableChange(document.getElementById('storage'), 'varNameContainer');
+	glob.refreshVariableList(document.getElementById('storage'));
 },
 
 //---------------------------------------------------------------------
 // Action Bot Function
 //
 // This is the function for the action within the Bot's Action class.
-// Keep in mind event calls won't have access to the "msg" parameter, 
+// Keep in mind event calls won't have access to the "msg" parameter,
 // so be sure to provide checks for variable existance.
 //---------------------------------------------------------------------
 
 action: function(cache) {
+	var _this = this;
 	const data = cache.actions[cache.index];
-	const server = cache.server;
-	const catid = this.evalMessage(data.categoryID, cache);
-	if(server && server.createChannel) {
-		const name = this.evalMessage(data.channelName, cache);
-		const storage = parseInt(data.storage);
-		server.createChannel(name, 'voice').then(function(channel) {
-			const channelData = {};
-			if(data.bitrate) {
-				channelData.bitrate = parseInt(this.evalMessage(data.bitrate, cache));
-			}
-			if(data.userLimit) {
-				channelData.userLimit = parseInt(this.evalMessage(data.userLimit, cache));
-			}
-			channel.edit(channelData);
-			if(catid) {
-				channel.setParent(catid);
-			}
-			const varName = this.evalMessage(data.varName, cache);
-			this.storeValue(channel, storage, varName, cache);
-			this.callNextAction(cache);
-		}.bind(this)).catch(this.displayError.bind(this, data, cache));
-	} else {
+	
+	var storage = parseInt(data.storage);
+	var varName = this.evalMessage(data.varName, cache);
+	const image = this.getVariable(storage, varName, cache);
+	const intensity= parseInt(data.intensity);
+	
+	var Jimp = require("jimp");
+	
+	
+	if(!image) {
 		this.callNextAction(cache);
+		return;
 	}
+	Jimp.read(image, function (err, image1) {
+	const effect = parseInt(data.effect);
+	switch(effect) {
+		case 0:
+			image1.blur(intensity);
+			
+			image1.getBuffer(Jimp.MIME_PNG, (error, image2) => {
+			_this.storeValue(image2, storage, varName, cache)
+			_this.callNextAction(cache);
+			})
+			
+			break;
+		case 1:
+			image1.pixelate(intensity);
+            			image1.getBuffer(Jimp.MIME_PNG, (error, image2) => {
+			_this.storeValue(image2, storage, varName, cache)
+			_this.callNextAction(cache);
+			})
+			break;
+	}
+
+	})
 },
+
 
 //---------------------------------------------------------------------
 // Action Bot Mod

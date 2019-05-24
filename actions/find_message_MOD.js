@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Convert List to Text",
+name: "Find Message",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Convert List to Text",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Lists and Loops",
+section: "Messaging",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,30 +23,32 @@ section: "Lists and Loops",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const list = ['Server Members', 'Server Channels', 'Server Roles', 'Server Emojis', 'All Bot Servers', 'Mentioned User Roles', 'Command Author Roles', 'Temp Variable', 'Server Variable', 'Global Variable'];
-	return `Convert ${list[parseInt(data.list)]} to Text`;
+	const channels = ['Same Channel', 'Mentioned Channel', '1st Server Channel', 'Temp Variable', 'Server Variable', 'Global Variable'];
+	const info = ['Find by Content', 'Find by ID'];
+	return `${channels[parseInt(data.channel)]} - ${info[parseInt(data.info)]}`;
 },
 
-//---------------------------------------------------------------------
-// DBM Mods Manager Variables (Optional but nice to have!)
-//
-// These are variables that DBM Mods Manager uses to show information
-// about the mods for people to see in the list.
-//---------------------------------------------------------------------
+	//---------------------------------------------------------------------
+	 // DBM Mods Manager Variables (Optional but nice to have!)
+	 //
+	 // These are variables that DBM Mods Manager uses to show information
+	 // about the mods for people to see in the list.
+	 //---------------------------------------------------------------------
 
-// Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & TotallyNotTwo",
+	 // Who made the mod (If not set, defaults to "DBM Mods")
+	 author: "Lasse",
 
-// The version of the mod (Defaults to 1.0.0)
-version: "1.9.2", //Added in 1.9.2
+	 // The version of the mod (Defaults to 1.0.0)
+	 version: "1.8.7", //Added in 1.8.5
 
-// A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "Added more options to default action.",
+	 // A short description to show on the mod line for this mod (Must be on a single line)
+	 short_description: "Finds a message by content or ID.",
 
-// If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
+	 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
 
 
-//---------------------------------------------------------------------
+	 //---------------------------------------------------------------------
+
 
 //---------------------------------------------------------------------
 // Action Storage Function
@@ -57,7 +59,9 @@ short_description: "Added more options to default action.",
 variableStorage: function(data, varType) {
 	const type = parseInt(data.storage);
 	if(type !== varType) return;
-	return ([data.varName2, 'Text']);
+	const info = parseInt(data.info);
+	let dataType = 'Message';
+	return ([data.varName2, dataType]);
 },
 
 //---------------------------------------------------------------------
@@ -68,58 +72,57 @@ variableStorage: function(data, varType) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["list", "varName", "start", "middle", "end", "storage", "varName2", "sort"],
+fields: ["channel", "varName", "info", "search", "storage", "varName2"],
 
 //---------------------------------------------------------------------
 // Command HTML
 //
 // This function returns a string containing the HTML used for
-// editting actions. 
+// editting actions.
 //
 // The "isEvent" parameter will be true if this action is being used
-// for an event. Due to their nature, events lack certain information, 
+// for an event. Due to their nature, events lack certain information,
 // so edit the HTML to reflect this.
 //
-// The "data" parameter stores constants for select elements to use. 
+// The "data" parameter stores constants for select elements to use.
 // Each is an array: index 0 for commands, index 1 for events.
-// The names are: sendTargets, members, roles, channels, 
+// The names are: sendTargets, members, roles, channels,
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
 html: function(isEvent, data) {
 	return `
-	<div><p>This action has been modified by DBM Mods.</p></div><br>
+<div id ="wrexdiv" style="width: 550px; height: 350px; overflow-y: scroll;">
+	<div>
+	<p>
+		<u>Mod Info:</u><br>
+		Created by Lasse!
+		Modified by General Wrex!
+	</p>
+</div><br>
 <div>
 	<div style="float: left; width: 35%;">
-		Source List:<br>
-		<select id="list" class="round" onchange="glob.listChange(this, 'varNameContainer')">
-			${data.lists[isEvent ? 1 : 0]}
+		Source Channel:<br>
+		<select id="channel" class="round" onchange="glob.channelChange(this, 'varNameContainer')">
+			${data.channels[isEvent ? 1 : 0]}
 		</select>
 	</div>
 	<div id="varNameContainer" style="display: none; float: right; width: 60%;">
 		Variable Name:<br>
 		<input id="varName" class="round" type="text" list="variableList"><br>
-	</div><br><br><br>
-	<div>
-		Sort List:<br>
-		<select id="sort" class="round" style="width: 90%;">
-			<option value="0">Sort By Name</option>
-			<option value="1" selected>Don't Sort</option>
+	</div>
+</div><br><br><br>
+<div>
+	<div style="float: left; width: 70%;">
+		Find by:<br>
+		<select id="info" class="round">
+			<option value="0" selected>Find by Content</option>
+			<option value="1">Find by ID</option>
 		</select>
-	</div>
-</div><br><br>
-<div style="padding-top: 8px; display: table;">
-	<div style="display: table-cell;">
-		Start Characters:<br>
-		<input id="start" class="round" type="text">
-	</div>
-	<div style="display: table-cell;">
-		Middle Characters:<br>
-		<input id="middle" class="round" type="text">
-	</div>
-	<div style="display: table-cell;">
-		End Characters:<br>
-		<input id="end" class="round" type="text" value="\\n">
+	</div><br><br><br>
+	<div style="float: left; width: 70%;">
+		Search for:<br>
+		<input id="search" class="round" type="text"><br>
 	</div>
 </div><br>
 <div>
@@ -131,9 +134,15 @@ html: function(isEvent, data) {
 	</div>
 	<div id="varNameContainer2" style="float: right; width: 60%;">
 		Variable Name:<br>
-		<input id="varName2" class="round" type="text">
+		<input id="varName2" class="round" type="text"><br>
 	</div>
-</div>`
+</div><br><br><br>
+<div>
+	<p>
+	<u>Note:</u><br>
+	This mod can only find messages by <b>content</b> within the last 100 messages.<br>
+	If there are multiple messages with the same content, the bot is always using the oldest message (after start).
+</div>`;
 },
 
 //---------------------------------------------------------------------
@@ -147,52 +156,60 @@ html: function(isEvent, data) {
 init: function() {
 	const {glob, document} = this;
 
-	glob.listChange(document.getElementById('list'), 'varNameContainer');
+	glob.channelChange(document.getElementById('channel'), 'varNameContainer');
 },
 
 //---------------------------------------------------------------------
 // Action Bot Function
 //
 // This is the function for the action within the Bot's Action class.
-// Keep in mind event calls won't have access to the "msg" parameter, 
+// Keep in mind event calls won't have access to the "msg" parameter,
 // so be sure to provide checks for variable existance.
 //---------------------------------------------------------------------
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
-	const storage = parseInt(data.list);
+	const channel = parseInt(data.channel);
 	const varName = this.evalMessage(data.varName, cache);
-	const list = this.getList(storage, varName, cache);
-	const sort = parseInt(data.sort);
+	const info = parseInt(data.info);
+	const search = this.evalMessage(data.search, cache);
+	const targetChannel = this.getChannel(channel, varName, cache);
+	if(!targetChannel) {
+		this.callNextAction(cache);
+		return;
+	}
 
-	switch(sort) {
+	const storage = parseInt(data.storage);
+	const varName2 = this.evalMessage(data.varName2, cache);
+
+	let result;
+	switch(info) {
 		case 0:
-			list.sort();
+			targetChannel.fetchMessages({ limit: 100 }).then(messages =>{
+				const message = messages.find(el => el.content.includes(search));			
+				if(message !== undefined){
+					this.storeValue(message, storage, varName2, cache);						
+				}
+				this.callNextAction(cache);
+			}).catch(err=>{
+				console.error(err); 
+				this.callNextAction(cache);
+			});	
 			break;
 		case 1:
+			targetChannel.fetchMessage(search).then(message =>{			
+				if(message !== undefined){
+					this.storeValue(message, storage, varName2, cache);
+				}						
+				this.callNextAction(cache);
+			}).catch(err=>{
+				console.error(err); 
+				this.callNextAction(cache);
+			});	
+			break;
+		default:
 			break;
 	}
-			
-	const start = this.evalMessage(data.start, cache).replace('\\n', '\n');
-	const middle = this.evalMessage(data.middle, cache).replace('\\n', '\n');
-	const end = this.evalMessage(data.end, cache).replace('\\n', '\n');
-	let result = '';
-
-	for(let i = 0; i < list.length; i++) {
-		if(i === 0) {
-			result += (start + String(list[i]) + end);
-		} else {
-			result += (start + middle + String(list[i]) + end);
-		}
-	}
-
-	if(result) {
-		const varName2 = this.evalMessage(data.varName2, cache);
-		const storage2 = parseInt(data.storage);
-		this.storeValue(result, storage2, varName2, cache);
-	}
-
-	this.callNextAction(cache);
 },
 
 //---------------------------------------------------------------------

@@ -6,7 +6,24 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Control Variable",
+name: "Generate Random Hex Color",
+
+
+//---------------------------------------------------------------------
+	 // DBM Mods Manager Variables (Optional but nice to have!)
+	 //
+	 // These are variables that DBM Mods Manager uses to show information
+	 // about the mods for people to see in the list.
+	 //---------------------------------------------------------------------
+
+	 // Who made the mod (If not set, defaults to "DBM Mods")
+	 author: "Jakob",
+
+	 // The version of the mod (Defaults to 1.0.0)
+	 version: "1.8.6", // Added in 1.8.6
+
+	 // A short description to show on the mod line for this mod (Must be on a single line)
+	 short_description: "Generates a random hex color code",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +31,7 @@ name: "Control Variable",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Variable Things",
+section: "Other Stuff",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,8 +40,7 @@ section: "Variable Things",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const storage = ['', 'Temp Variable', 'Server Variable', 'Global Variable'];
-	return `${storage[parseInt(data.storage)]} (${data.varName}) ${data.changeType === "1" ? "+=" : "="} ${data.value}`;
+	return `Generates random hex color code`;
 },
 
 //---------------------------------------------------------------------
@@ -36,28 +52,8 @@ subtitle: function(data) {
 variableStorage: function(data, varType) {
 	const type = parseInt(data.storage);
 	if(type !== varType) return;
-	return ([data.varName, 'Unknown Type']);
+	return ([data.varName, 'Color Code']);
 },
-
-//---------------------------------------------------------------------
-// DBM Mods Manager Variables (Optional but nice to have!)
-//
-// These are variables that DBM Mods Manager uses to show information
-// about the mods for people to see in the list.
-//---------------------------------------------------------------------
-
-// Who made the mod (If not set, defaults to "DBM Mods")
-author: "DBM & MrGold",
-
-// The version of the mod (Defaults to 1.0.0)
-version: "1.9.5", //Added in 1.9.5
-
-// A short description to show on the mod line for this mod (Must be on a single line)
-short_description: "Controls the value for an Existing Variable or a New Variable",
-
-// If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
-
-//---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
 // Action Fields
@@ -67,48 +63,41 @@ short_description: "Controls the value for an Existing Variable or a New Variabl
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["changeType", "value", "storage", "varName"],
+fields: ["storage", "varName"],
 
 //---------------------------------------------------------------------
 // Command HTML
 //
 // This function returns a string containing the HTML used for
-// editting actions. 
+// editting actions.
 //
 // The "isEvent" parameter will be true if this action is being used
-// for an event. Due to their nature, events lack certain information, 
+// for an event. Due to their nature, events lack certain information,
 // so edit the HTML to reflect this.
 //
-// The "data" parameter stores constants for select elements to use. 
+// The "data" parameter stores constants for select elements to use.
 // Each is an array: index 0 for commands, index 1 for events.
-// The names are: sendTargets, members, roles, channels, 
+// The names are: sendTargets, members, roles, channels,
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
 html: function(isEvent, data) {
 	return `
-<div><p>This action has been modified by DBM Mods</p></div>
-<div>
-	<div style="padding-top: 12px; width: 35%;">
-		Control Type:<br>
-		<select id="changeType" class="round">
-			<option value="0" selected>Set Value</option>
-			<option value="1">Add Value</option>
-		</select>
-	</div>
-</div><br>
-<div>
-	Value:<br>
-	<textarea id="value" rows="7" placeholder="Insert what you want here..." style="width: 99%; font-family: monospace; white-space: nowrap; resize: none;"></textarea>
-</div><br>
+</div>
+		<p>
+			<u>Mod Info:</u><br>
+			Created by Jakob!<br>
+			For Embed Messages colors you can also insert RANDOM into the color field.
+		</p>
+	</div><br>
 <div>
 	<div style="float: left; width: 35%;">
 		Store In:<br>
-		<select id="storage" class="round">
-			${data.variables[1]}
+		<select id="storage" class="round" onchange="glob.variableChange(this, 'varNameContainer')">
+			${data.variables[0]}
 		</select>
 	</div>
-	<div id="varNameContainer" style="float: right; width: 60%;">
+	<div id="varNameContainer" style="display: none; float: right; width: 60%;">
 		Variable Name:<br>
 		<input id="varName" class="round" type="text">
 	</div>
@@ -123,13 +112,17 @@ html: function(isEvent, data) {
 // functions for the DOM elements.
 //---------------------------------------------------------------------
 
-init: function() {},
+init: function() {
+	const {glob, document} = this;
+
+	glob.variableChange(document.getElementById('storage'), 'varNameContainer');
+},
 
 //---------------------------------------------------------------------
 // Action Bot Function
 //
 // This is the function for the action within the Bot's Action class.
-// Keep in mind event calls won't have access to the "msg" parameter, 
+// Keep in mind event calls won't have access to the "msg" parameter,
 // so be sure to provide checks for variable existance.
 //---------------------------------------------------------------------
 
@@ -137,30 +130,10 @@ action: function(cache) {
 	const data = cache.actions[cache.index];
 	const type = parseInt(data.storage);
 	const varName = this.evalMessage(data.varName, cache);
-	const storage = this.getVariable(type, varName, cache);
-	const isAdd = Boolean(data.changeType === "1");
-	let val = this.evalMessage(data.value, cache);
-	try {
-		val = this.eval(val, cache);
-	} catch(e) {
-		this.displayError(data, cache, e);
-	}
-	if(val !== undefined) {
-		if(isAdd) {
-			let result;
-			if(storage === undefined) {
-				result = val;
-			} else {
-				result = storage + val;
-			}
-			this.storeValue(result, type, varName, cache);
-		} else {
-			this.storeValue(val, type, varName, cache);
-		}
-	}
+	const code = "000000".replace(/0/g,function(){return (~~(Math.random()*16)).toString(16);});
+	this.storeValue('#' + code, type, varName, cache);
 	this.callNextAction(cache);
 },
-
 //---------------------------------------------------------------------
 // Action Bot Mod
 //
@@ -170,7 +143,6 @@ action: function(cache) {
 // functions you wish to overwrite.
 //---------------------------------------------------------------------
 
-mod: function(DBM) {
-}
+mod: function(DBM) {}
 
 }; // End of module
